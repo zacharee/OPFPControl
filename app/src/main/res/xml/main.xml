@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <tk.zwander.opfpcontrol.IconPreference
+            android:title="@string/icon"
+            android:key="fp_icon_path"
+    />
+    
+    <tk.zwander.opfpcontrol.AutoColorPreference
+            app:cpv_allowCustom="true"
+            app:cpv_showAlphaSlider="true"
+            android:title="@string/tint"
+            android:defaultValue="@android:color/transparent"
+            android:persistent="false"
+            android:key="fp_icon_tint"
+    />
+    
+    <tk.zwander.opfpcontrol.IconPreference
+            android:title="@string/icon_disabled"
+            android:key="fp_icon_path_disabled"
+    />
+    
+    <tk.zwander.opfpcontrol.AutoColorPreference
+            app:cpv_allowCustom="true"
+            app:cpv_showAlphaSlider="true"
+            android:title="@string/tint_disabled"
+            android:defaultValue="@android:color/transparent"
+            android:persistent="false"
+            android:key="fp_icon_tint_disabled"
+    />
+    
+    <SwitchPreference
+            android:title="@string/play_anim"
+            android:key="fp_play_anim"
+    />
+
+</PreferenceScreen>

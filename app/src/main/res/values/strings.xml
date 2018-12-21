@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">OPFPControl</string>
+
+    <string name="tint">Icon Tint Normal</string>
+    <string name="tint_disabled">Icon Tint Disabled</string>
+    <string name="icon">Icon Image Normal</string>
+    <string name="icon_disabled">Icon Image Disabled</string>
+    
+    <string name="play_anim">Show Animation</string>
+</resources>
