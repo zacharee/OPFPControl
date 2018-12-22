@@ -92,6 +92,11 @@ class MainActivity : AppCompatActivity() {
                         convertToBitmapAndSave(data?.data, iconNormal.key) { path -> iconNormal.setPath(path) }
                     }
                 }
+                REQ_DIS -> {
+                    if (resultCode == Activity.RESULT_OK) {
+                        convertToBitmapAndSave(data?.data, iconDisabled.key) { path -> iconDisabled.setPath(path) }
+                    }
+                }
             }
         }
 

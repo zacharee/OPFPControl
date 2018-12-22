@@ -5,6 +5,7 @@
     <tk.zwander.opfpcontrol.IconPreference
             android:title="@string/icon"
             android:key="fp_icon_path"
+            app:def_icon="@drawable/fod_icon_default"
     />
     
     <tk.zwander.opfpcontrol.AutoColorPreference
@@ -19,6 +20,7 @@
     <tk.zwander.opfpcontrol.IconPreference
             android:title="@string/icon_disabled"
             android:key="fp_icon_path_disabled"
+            app:def_icon="@drawable/fp_icon_default_disable"
     />
     
     <tk.zwander.opfpcontrol.AutoColorPreference

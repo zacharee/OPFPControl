@@ -4,9 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.provider.Settings
 import android.util.AttributeSet
-import androidx.preference.PreferenceViewHolder
 import com.jaredrummler.android.colorpicker.ColorPreferenceCompat
-import java.lang.Exception
 
 class AutoColorPreference : ColorPreferenceCompat {
     constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet)
@@ -14,10 +12,12 @@ class AutoColorPreference : ColorPreferenceCompat {
 
     init {
         isPersistent = false
+    }
 
-        try {
-            saveValue(Color.parseColor(Settings.Global.getString(context.contentResolver, key)))
-        } catch (e: Exception) {}
+    override fun onSetInitialValue(defaultValue: Any?) {
+        super.onSetInitialValue(try {
+            Color.parseColor(Settings.Global.getString(context.contentResolver, key))
+        } catch (e: Exception) { defaultValue })
     }
 
     override fun saveValue(color: Int) {
