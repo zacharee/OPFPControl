@@ -7,10 +7,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreference
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -82,13 +80,13 @@ class MainActivity : AppCompatActivity() {
                 true
             }
 
-            (findPreference("fp_play_anim") as SwitchPreference).apply {
-                isChecked = Settings.Global.getInt(context?.contentResolver, key, 1) == 1
-
-                setOnPreferenceChangeListener { _, newValue ->
-                    Settings.Global.putInt(context?.contentResolver, key, if (newValue.toString().toBoolean()) 1 else 0)
-                }
-            }
+//            (findPreference(PrefManager.FP_PLAY_ANIM) as SwitchPreference).apply {
+//                isChecked = Settings.Global.getInt(context?.contentResolver, key, 1) == 1
+//
+//                setOnPreferenceChangeListener { _, newValue ->
+//                    Settings.Global.putInt(context?.contentResolver, key, if (newValue.toString().toBoolean()) 1 else 0)
+//                }
+//            }
 
             findPreference("apply").setOnPreferenceClickListener {
                 context?.applyOverlay()

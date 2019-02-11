@@ -27,6 +27,8 @@ class PrefManager private constructor(private val context: Context) {
 
         const val FP_ICON_PATH = "fp_icon_path"
         const val FP_ICON_PATH_DISABLED = "fp_icon_path_disabled"
+
+        const val FP_PLAY_ANIM = "fp_play_anim"
     }
 
     private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
@@ -62,8 +64,12 @@ class PrefManager private constructor(private val context: Context) {
             putInt(FP_ICON_DISABLED_TINT, value)
         }
 
+    val fpPlayAnim: Boolean
+        get() = getBoolean(FP_PLAY_ANIM, true)
+
     fun getInt(key: String, def: Int = 0) = prefs.getInt(key, def)
     fun getString(key: String, def: String? = null): String? = prefs.getString(key, def)
+    fun getBoolean(key: String, def: Boolean = false) = prefs.getBoolean(key, def)
 
     fun putInt(key: String, value: Int) = prefs.edit().putInt(key, value).apply()
     fun putString(key: String, value: String?) = prefs.edit().putString(key, value).apply()

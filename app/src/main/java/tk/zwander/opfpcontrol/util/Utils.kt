@@ -7,8 +7,6 @@ import android.util.Base64
 import java.io.ByteArrayOutputStream
 
 
-
-
 val Context.prefs: PrefManager
     get() = PrefManager.getInstance(this)
 

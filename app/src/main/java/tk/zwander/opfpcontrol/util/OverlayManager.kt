@@ -8,6 +8,19 @@ import com.android.apksig.ApkSigner
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import tk.zwander.opfpcontrol.util.Keys.drawable
+import tk.zwander.opfpcontrol.util.Keys.drawable_xxhdpi_v4
+import tk.zwander.opfpcontrol.util.Keys.fod_icon_default
+import tk.zwander.opfpcontrol.util.Keys.fp_02_touch_down_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_02_touch_up_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_03_touch_down_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_03_touch_up_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_default_touch_down_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_default_touch_up_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_icon_default_disable
+import tk.zwander.opfpcontrol.util.Keys.fp_mc_touch_down_animation
+import tk.zwander.opfpcontrol.util.Keys.fp_mc_touch_up_animation
+import tk.zwander.opfpcontrol.util.Keys.systemuiPkg
 import java.io.*
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -22,7 +35,24 @@ enum class OverlayType {
     SIGNED
 }
 
-const val systemuiPkg = "com.android.systemui"
+object Keys {
+    const val systemuiPkg = "com.android.systemui"
+
+    const val drawable_xxhdpi_v4 = "drawable-xxhdpi-v4"
+    const val drawable = "drawable"
+
+    const val fod_icon_default = "fod_icon_default.png"
+    const val fp_icon_default_disable = "fp_icon_default_disable.png"
+
+    const val fp_default_touch_down_animation = "fp_default_touch_down_animation.xml"
+    const val fp_default_touch_up_animation = "fp_default_touch_up_animation.xml"
+    const val fp_02_touch_down_animation = "fp_02_touch_down_animation.xml"
+    const val fp_02_touch_up_animation = "fp_02_touch_up_animation.xml"
+    const val fp_03_touch_down_animation = "fp_03_touch_down_animation.xml"
+    const val fp_03_touch_up_animation = "fp_03_touch_up_animation.xml"
+    const val fp_mc_touch_down_animation = "fp_mc_touch_down_animation.xml"
+    const val fp_mc_touch_up_animation = "fp_mc_touch_up_animation.xml"
+}
 
 val Context.aapt: String?
     get() {
@@ -60,14 +90,55 @@ val arch: String
 
 fun Context.applyOverlay(listener: (() -> Unit)? = null) {
     GlobalScope.launch {
+        val resources = arrayListOf<ResourceFileData>(
+            ResourceImageData(
+                fod_icon_default, drawable_xxhdpi_v4,
+                prefs.fpIconNormalBmp?.tint(prefs.fpIconNormalTint)),
+            ResourceImageData(
+                fp_icon_default_disable, drawable_xxhdpi_v4,
+                prefs.fpIconDisabledBmp?.tint(prefs.fpIconDisabledTint))
+        ).apply {
+            if (!prefs.fpPlayAnim) {
+                add(ResourceFileData(
+                    fp_default_touch_down_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_default_touch_up_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_02_touch_down_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_02_touch_up_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_03_touch_down_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_03_touch_up_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_mc_touch_down_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+                add(ResourceFileData(
+                    fp_mc_touch_up_animation, drawable,
+                    makeEmptyAnimationList()
+                ))
+            }
+        }
+
         doCompileAlignAndSign(
             systemuiPkg,
             "fp",
             { installToSystem("OPFPIcon", it, listener) },
-            ResourceImageData("fod_icon_default.png", "drawable-xxhdpi-v4",
-                prefs.fpIconNormalBmp?.tint(prefs.fpIconNormalTint)),
-            ResourceImageData("fp_icon_default_disable.png", "drawable-xxhdpi-v4",
-                prefs.fpIconDisabledBmp?.tint(prefs.fpIconDisabledTint))
+            resources
         )
     }
 }
@@ -82,6 +153,15 @@ fun makeResourceXml(vararg data: ResourceData): String {
             }
         }
         .append("</resources>")
+        .toString()
+}
+
+fun makeEmptyAnimationList(): String {
+    return StringBuilder()
+        .append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
+        .append("<animation-list xmlns:android=\"http://schemas.android.com/apk/res/android\" android:oneshot=\"false\">\n")
+        .append("<item android:duration=\"50\" android:drawable=\"@android:color/transparent\" />\n")
+        .append("</animation-list>\n")
         .toString()
 }
 
@@ -103,7 +183,7 @@ fun Context.doCompileAlignAndSign(
     targetPackage: String,
     suffix: String,
     listener: ((apk: File) -> Unit)? = null,
-    vararg resFiles: ResourceFileData
+    resFiles: List<ResourceFileData>
 ) {
     val base = makeBaseDir(suffix)
     val manifest = getManifest(base, suffix, targetPackage)
