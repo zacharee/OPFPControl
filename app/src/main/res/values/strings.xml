@@ -5,6 +5,7 @@
     <string name="tint_disabled">Icon Tint Disabled</string>
     <string name="icon">Icon Image Normal</string>
     <string name="icon_disabled">Icon Image Disabled</string>
+    <string name="apply">Apply</string>
     
     <string name="play_anim">Show Animation</string>
 </resources>

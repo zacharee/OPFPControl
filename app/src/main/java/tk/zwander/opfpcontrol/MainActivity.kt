@@ -2,39 +2,34 @@ package tk.zwander.opfpcontrol
 
 import android.app.Activity
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
-import android.provider.DocumentsContract
-import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import com.jaredrummler.android.colorpicker.ColorPreferenceCompat
-import com.topjohnwu.superuser.Shell
+import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import java.io.*
+import tk.zwander.opfpcontrol.util.PrefManager
+import tk.zwander.opfpcontrol.util.applyOverlay
+import tk.zwander.opfpcontrol.util.prefs
 
 @ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (Shell.rootAccess()) {
-            Shell.su("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}")
-                .submit()
-            Shell.su("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}")
-                .submit()
+        if (Shell.SU.available()) {
+            GlobalScope.launch {
+                Shell.SU.run("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}")
+                Shell.SU.run("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}")
+            }
         } else {
             finish()
 
@@ -48,14 +43,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     @ExperimentalCoroutinesApi
-    class Prefs : PreferenceFragmentCompat() {
+    class Prefs : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
         companion object {
             const val REQ_NORM = 100
             const val REQ_DIS = 101
         }
 
-        val iconNormal by lazy { findPreference("fp_icon_path") as IconPreference }
-        val iconDisabled by lazy { findPreference("fp_icon_path_disabled") as IconPreference }
+        val iconNormal by lazy { findPreference(PrefManager.FP_ICON_PATH) as IconPreference }
+        val iconDisabled by lazy { findPreference(PrefManager.FP_ICON_PATH_DISABLED) as IconPreference }
 
         val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -63,8 +58,19 @@ class MainActivity : AppCompatActivity() {
             type = "image/*"
         }
 
+        override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+            when (key) {
+                PrefManager.FP_ICON_NORMAL,
+                PrefManager.FP_ICON_NORMAL_TINT -> iconNormal.updateIcon()
+                PrefManager.FP_ICON_DISABLED,
+                PrefManager.FP_ICON_DISABLED_TINT -> iconDisabled.updateIcon()
+            }
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.main, rootKey)
+
+            preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
             iconNormal.setOnPreferenceClickListener {
                 startActivityForResult(pickIntent, REQ_NORM)
@@ -83,37 +89,32 @@ class MainActivity : AppCompatActivity() {
                     Settings.Global.putInt(context?.contentResolver, key, if (newValue.toString().toBoolean()) 1 else 0)
                 }
             }
+
+            findPreference("apply").setOnPreferenceClickListener {
+                context?.applyOverlay()
+                true
+            }
         }
 
         override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
             when (requestCode) {
                 REQ_NORM -> {
                     if (resultCode == Activity.RESULT_OK) {
-                        convertToBitmapAndSave(data?.data, iconNormal.key) { path -> iconNormal.setPath(path) }
+                        context?.prefs?.fpIconNormalBmp = getBitmapFromUri(data?.data)
                     }
                 }
                 REQ_DIS -> {
                     if (resultCode == Activity.RESULT_OK) {
-                        convertToBitmapAndSave(data?.data, iconDisabled.key) { path -> iconDisabled.setPath(path) }
+                        context?.prefs?.fpIconDisabledBmp = getBitmapFromUri(data?.data)
                     }
                 }
             }
         }
 
-        private fun convertToBitmapAndSave(uri: Uri?, filename: String, listener: ((String?) -> Unit)?) {
-            GlobalScope.launch {
-                if (uri == null) {
-                    listener?.invoke(null)
-                    return@launch
-                }
+        override fun onDestroy() {
+            super.onDestroy()
 
-                val file = File(context?.getExternalFilesDir(null), filename)
-                val bmp = getBitmapFromUri(uri)
-
-                bmp?.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(file))
-
-                MainScope().launch { listener?.invoke(file.absolutePath) }
-            }
+            preferenceManager.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
         }
 
         private fun getBitmapFromUri(uri: Uri?): Bitmap? {
