@@ -4,13 +4,18 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.os.Build
+import androidx.core.content.pm.PackageInfoCompat
 import com.android.apksig.ApkSigner
 import eu.chainfire.libsuperuser.Shell
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import tk.zwander.opfpcontrol.util.Keys.baseDest
 import tk.zwander.opfpcontrol.util.Keys.drawable
 import tk.zwander.opfpcontrol.util.Keys.drawable_xxhdpi_v4
 import tk.zwander.opfpcontrol.util.Keys.fod_icon_default
+import tk.zwander.opfpcontrol.util.Keys.folderName
 import tk.zwander.opfpcontrol.util.Keys.fp_02_touch_down_animation
 import tk.zwander.opfpcontrol.util.Keys.fp_02_touch_up_animation
 import tk.zwander.opfpcontrol.util.Keys.fp_03_touch_down_animation
@@ -20,6 +25,9 @@ import tk.zwander.opfpcontrol.util.Keys.fp_default_touch_up_animation
 import tk.zwander.opfpcontrol.util.Keys.fp_icon_default_disable
 import tk.zwander.opfpcontrol.util.Keys.fp_mc_touch_down_animation
 import tk.zwander.opfpcontrol.util.Keys.fp_mc_touch_up_animation
+import tk.zwander.opfpcontrol.util.Keys.opfpcontrol
+import tk.zwander.opfpcontrol.util.Keys.overlay
+import tk.zwander.opfpcontrol.util.Keys.suffix
 import tk.zwander.opfpcontrol.util.Keys.systemuiPkg
 import java.io.*
 import java.security.KeyStore
@@ -37,6 +45,12 @@ enum class OverlayType {
 
 object Keys {
     const val systemuiPkg = "com.android.systemui"
+    const val opfpcontrol = "opfpcontrol"
+    const val suffix = "fp"
+    const val overlay = "overlay"
+
+    const val baseDest = "/system/priv-app"
+    const val folderName = "OPFPIcon"
 
     const val drawable_xxhdpi_v4 = "drawable-xxhdpi-v4"
     const val drawable = "drawable"
@@ -88,6 +102,7 @@ val arch: String
         else -> ""
     }
 
+@ExperimentalCoroutinesApi
 fun Context.applyOverlay(listener: (() -> Unit)? = null) {
     GlobalScope.launch {
         val resources = arrayListOf<ResourceFileData>(
@@ -136,10 +151,18 @@ fun Context.applyOverlay(listener: (() -> Unit)? = null) {
 
         doCompileAlignAndSign(
             systemuiPkg,
-            "fp",
-            { installToSystem("OPFPIcon", it, listener) },
+            suffix,
+            { installToSystem(folderName, it, listener) },
             resources
         )
+    }
+}
+
+fun deleteOverlay(listener: (() -> Unit)? = null) {
+    GlobalScope.launch {
+        removeFromSystem(folderName)
+
+        MainScope().launch { listener?.invoke() }
     }
 }
 
@@ -224,21 +247,28 @@ fun Context.doCompileAlignAndSign(
     listener?.invoke(signed)
 }
 
+@ExperimentalCoroutinesApi
 fun installToSystem(folderName: String, signed: File, listener: (() -> Unit)? = null) {
     GlobalScope.launch {
-        val folder = File("/system/app/", folderName)
+        val folder = File("$baseDest/", folderName)
 
         val dst = File(folder, "$folderName.apk")
 
         Shell.SU.run("mount -o rw,remount /system")
-        Shell.SU.run("mkdir /system/app/$folderName")
+        Shell.SU.run("mkdir $baseDest/$folderName")
         Shell.run("su", arrayOf("cp ${signed.absolutePath} ${dst.absolutePath}"), null, true)
         Shell.SU.run("chmod 0755 ${folder.absolutePath}")
         Shell.SU.run("chmod 0644 ${dst.absolutePath}")
         Shell.SU.run("mount -o ro,remount /system")
 
-        listener?.invoke()
+        MainScope().launch { listener?.invoke() }
     }
+}
+
+fun removeFromSystem(folderName: String) {
+    Shell.SU.run("mount -o rw,remount /system")
+    Shell.SU.run("rm -rf $baseDest/$folderName")
+    Shell.SU.run("mount -o ro,remount /system")
 }
 
 fun Context.makeBaseDir(suffix: String): File {
@@ -262,7 +292,7 @@ fun Context.getManifest(base: File, suffix: String, packageName: String): File {
     builder.append(
         "<manifest " +
                 "xmlns:android=\"http://schemas.android.com/apk/res/android\" " +
-                "package=\"$packageName.opfpcontrol.$suffix.overlay\" " +
+                "package=\"$packageName.$opfpcontrol.$suffix.$overlay\" " +
                 "android:versionCode=\"1\" " +
                 "android:versionName=\"1\"> "
     )
@@ -270,7 +300,7 @@ fun Context.getManifest(base: File, suffix: String, packageName: String): File {
     builder.append("<overlay android:targetPackage=\"$packageName\" />")
     builder.append("<application android:allowBackup=\"false\" android:hasCode=\"false\">")
     builder.append("<meta-data android:name=\"app_version\" android:value=\"v=${info.versionName}\" />")
-    builder.append("<meta-data android:name=\"app_version_code\" android:value=\"v=${info.versionCode}\" />")
+    builder.append("<meta-data android:name=\"app_version_code\" android:value=\"v=${PackageInfoCompat.getLongVersionCode(info)}\" />")
     builder.append("<meta-data android:name=\"overlay_version\" android:value=\"1\" />")
     builder.append("<meta-data android:name=\"target_package\" android:value=\"$packageName\" />")
     builder.append("</application>")
@@ -335,13 +365,13 @@ fun Context.alignOverlay(overlayFile: File, alignedOverlayFile: File) {
 fun Context.signOverlay(overlayFile: File, signed: File) {
     Shell.SH.run("chmod 777 ${overlayFile.absolutePath}")
 
-    val key = File(cacheDir, "/signing-key")
+    val key = File(cacheDir, "/signing-key-new")
     val pass = "overlay".toCharArray()
 
     if (key.exists()) key.delete()
 
     val store = KeyStore.getInstance(KeyStore.getDefaultType())
-    store.load(assets.open("signing-key"), pass)
+    store.load(assets.open("signing-key-new"), pass)
 
     val privKey = store.getKey("key", pass) as PrivateKey
     val certs = ArrayList<X509Certificate>()

@@ -5,6 +5,72 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        tools:context=".MainActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:id="@+id/content"
-        tools:context=".MainActivity"
-/>
+        />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progress_remove"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerInParent="true"
+            android:visibility="gone"
+            style="?android:progressBarStyleLarge"
+            />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/remove"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_delete_black_24dp"
+            android:layout_centerInParent="true"
+            app:fabSize="normal"
+            app:backgroundTint="?colorAccent"
+            app:useCompatPadding="true"
+            />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progress_apply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerInParent="true"
+            android:visibility="gone"
+            style="?android:progressBarStyleLarge"
+            />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/apply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_check_black_24dp"
+            android:layout_centerInParent="true"
+            app:fabSize="normal"
+            app:backgroundTint="?colorAccent"
+            app:useCompatPadding="true"
+            />
+
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

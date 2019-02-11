@@ -2,6 +2,7 @@ package tk.zwander.opfpcontrol.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -73,4 +74,10 @@ class PrefManager private constructor(private val context: Context) {
 
     fun putInt(key: String, value: Int) = prefs.edit().putInt(key, value).apply()
     fun putString(key: String, value: String?) = prefs.edit().putString(key, value).apply()
+
+    fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+            prefs.registerOnSharedPreferenceChangeListener(listener)
+
+    fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
 }

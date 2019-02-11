@@ -5,7 +5,12 @@
     <string name="tint_disabled">Icon Tint Disabled</string>
     <string name="icon">Icon Image Normal</string>
     <string name="icon_disabled">Icon Image Disabled</string>
-    <string name="apply">Apply</string>
-    
     <string name="play_anim">Show Animation</string>
+    <string name="apply">Apply</string>
+    <string name="reboot">Reboot</string>
+    <string name="later">Later</string>
+
+    <string name="reboot_first_desc">A reboot is required to activate the overlay. Would you like to reboot now or later?</string>
+    <string name="reboot_others_desc">It\'s strongly recommended that you reboot after applying new settings. Would you like to reboot now?</string>
+    <string name="reboot_uninstall_desc">A reboot is required to complete the removal process. Would you like to reboot now?</string>
 </resources>

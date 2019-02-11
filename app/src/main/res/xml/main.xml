@@ -36,9 +36,4 @@
         android:defaultValue="true"
         />
 
-    <Preference
-        android:title="@string/apply"
-        android:key="apply"
-        />
-
 </PreferenceScreen>

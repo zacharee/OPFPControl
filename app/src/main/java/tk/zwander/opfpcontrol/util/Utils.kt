@@ -1,6 +1,7 @@
 package tk.zwander.opfpcontrol.util
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.util.Base64
@@ -9,6 +10,11 @@ import java.io.ByteArrayOutputStream
 
 val Context.prefs: PrefManager
     get() = PrefManager.getInstance(this)
+
+val Context.isInstalled: Boolean
+    get() = packageManager.getPackageArchiveInfo(
+        "${Keys.baseDest}/${Keys.folderName}/${Keys.folderName}.apk",
+        PackageManager.GET_META_DATA) != null
 
 fun Context.getProperIcon(key: String): BitmapDrawable {
     return BitmapDrawable(
