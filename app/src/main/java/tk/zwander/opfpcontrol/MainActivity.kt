@@ -1,7 +1,6 @@
 package tk.zwander.opfpcontrol
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
@@ -13,44 +12,24 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.ColorUtils
 import androidx.preference.PreferenceFragmentCompat
-import eu.chainfire.librootjava.RootIPCReceiver
-import eu.chainfire.librootjava.RootJava
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import tk.zwander.opfpcontrol.root.RootStuff
 import tk.zwander.opfpcontrol.util.*
 
 @ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
-    private val ipcReceiver by lazy { IPCReceiverImpl(this, 100) }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (Shell.SU.available()) {
-            GlobalScope.launch {
-                Shell.SU.run("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}")
-                Shell.SU.run("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}")
-
-                Shell.SU.run(RootJava.getLaunchScript(
-                    this@MainActivity,
-                    RootStuff::class.java,
-                    null, null, null,
-                    "${BuildConfig.APPLICATION_ID}:root"))
-            }
-        } else {
+        if (!Shell.SU.available()) {
             finish()
 
             return
         }
 
-        ipcReceiver.setContext(this)
         prefs.registerOnSharedPreferenceChangeListener(this)
         updateColors()
 
@@ -58,17 +37,20 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             setOnClickListener {
                 progress_apply.visibility = View.VISIBLE
 
-                val wasInstalled = isInstalled
+                val wasInstalledBeforeApply = isInstalled
                 applyOverlay {
                     progress_apply.visibility = View.GONE
                     remove.visibility = if (isInstalled) View.VISIBLE else View.GONE
+
+                    prefs.needsAdditionalReboot = !wasInstalledBeforeApply
+
                     AlertDialog.Builder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(
-                            if (wasInstalled)
+                            if (wasInstalledBeforeApply)
                                 R.string.reboot_others_desc else R.string.reboot_first_desc
                         )
-                        .setPositiveButton(R.string.reboot) { _, _ -> ipcReceiver.ipc?.reboot(null) }
+                        .setPositiveButton(R.string.reboot) { _, _ -> app.ipcReceiver.postIPCAction { it.reboot(null) } }
                         .setNegativeButton(R.string.later, null)
                         .setCancelable(false)
                         .show()
@@ -87,7 +69,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     AlertDialog.Builder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(R.string.reboot_uninstall_desc)
-                        .setPositiveButton(R.string.reboot) { _, _ -> ipcReceiver.ipc?.reboot(null) }
+                        .setPositiveButton(R.string.reboot) { _, _ -> app.ipcReceiver.postIPCAction { it.reboot(null) } }
                         .setNegativeButton(R.string.later, null)
                         .setCancelable(false)
                         .show()
@@ -121,28 +103,28 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         super.onDestroy()
 
         prefs.unregisterOnSharedPreferenceChangeListener(this)
-        ipcReceiver.release()
     }
 
     private fun updateColors() {
-        val normalColor = prefs.fpIconNormalTint
-        val disabledColor = prefs.fpIconDisabledTint
+        val normalColor = prefs.fpIconNormalTint.run {
+            brightenAndOpacify(this)
+        }
+        val disabledColor = prefs.fpIconDisabledTint.run {
+            brightenAndOpacify(this)
+        }
 
         apply.supportBackgroundTintList = ColorStateList.valueOf(normalColor)
-        progress_apply.indeterminateTintList = ColorStateList.valueOf(
-            ColorUtils.blendARGB(normalColor, Color.BLACK, 0.2f))
+        progress_apply.indeterminateTintList = ColorStateList.valueOf(progressAccent(normalColor))
 
         remove.supportBackgroundTintList = ColorStateList.valueOf(disabledColor)
-        progress_remove.indeterminateTintList = ColorStateList.valueOf(
-            ColorUtils.blendARGB(disabledColor, Color.BLACK, 0.2f)
-        )
+        progress_remove.indeterminateTintList = ColorStateList.valueOf(progressAccent(disabledColor))
 
-        val normalImgTint = if (Color.luminance(normalColor) < 0.5f) {
+        val normalImgTint = if (isDark(normalColor)) {
             Color.WHITE
         } else {
             Color.BLACK
         }
-        val disabledImgTint = if (Color.luminance(disabledColor) < 0.5f) {
+        val disabledImgTint = if (isDark(disabledColor)) {
             Color.WHITE
         } else {
             Color.BLACK
@@ -205,18 +187,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             val image = BitmapFactory.decodeFileDescriptor(fileDescriptor)
             parcelFileDescriptor?.close()
             return image
-        }
-    }
-
-    class IPCReceiverImpl(context: Context, code: Int) : RootIPCReceiver<RootBridge>(context, code) {
-        var ipc: RootBridge? = null
-
-        override fun onConnect(ipc: RootBridge?) {
-            this.ipc = ipc
-        }
-
-        override fun onDisconnect(ipc: RootBridge?) {
-            this.ipc = null
         }
     }
 }
