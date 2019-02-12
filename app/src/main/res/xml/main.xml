@@ -30,7 +30,7 @@
         app:cpv_showAlphaSlider="true"
         />
 
-    <SwitchPreference
+    <tk.zwander.opfpcontrol.prefs.AccentedSwitchPreference
         android:key="fp_play_anim"
         android:title="@string/play_anim"
         android:defaultValue="true"

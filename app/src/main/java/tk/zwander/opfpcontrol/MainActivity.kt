@@ -10,13 +10,13 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import tk.zwander.opfpcontrol.util.*
+import tk.zwander.opfpcontrol.views.AccentedAlertDialogBuilder
 
 @ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
                     prefs.needsAdditionalReboot = !wasInstalledBeforeApply
 
-                    AlertDialog.Builder(this@MainActivity)
+                    AccentedAlertDialogBuilder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(
                             if (wasInstalledBeforeApply)
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                 deleteOverlay {
                     progress_remove.visibility = View.GONE
 
-                    AlertDialog.Builder(this@MainActivity)
+                    AccentedAlertDialogBuilder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(R.string.reboot_uninstall_desc)
                         .setPositiveButton(R.string.reboot) { _, _ -> app.ipcReceiver.postIPCAction { it.reboot(null) } }
