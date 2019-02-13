@@ -27,6 +27,7 @@ import tk.zwander.opfpcontrol.util.Keys.fp_mc_touch_down_animation
 import tk.zwander.opfpcontrol.util.Keys.fp_mc_touch_up_animation
 import tk.zwander.opfpcontrol.util.Keys.opfpcontrol
 import tk.zwander.opfpcontrol.util.Keys.overlay
+import tk.zwander.opfpcontrol.util.Keys.partition
 import tk.zwander.opfpcontrol.util.Keys.suffix
 import tk.zwander.opfpcontrol.util.Keys.systemuiPkg
 import java.io.*
@@ -49,8 +50,9 @@ object Keys {
     const val suffix = "fp"
     const val overlay = "overlay"
 
-    const val baseDest = "/system/priv-app"
-    const val folderName = "OPFPIcon"
+    const val baseDest = "/system_root/system/app"
+    const val partition = "/system_root"
+    const val folderName = "$systemuiPkg.$opfpcontrol.$suffix.$overlay"
 
     const val drawable_xxhdpi_v4 = "drawable-xxhdpi-v4"
     const val drawable = "drawable"
@@ -254,21 +256,21 @@ fun installToSystem(folderName: String, signed: File, listener: (() -> Unit)? = 
 
         val dst = File(folder, "$folderName.apk")
 
-        Shell.SU.run("mount -o rw,remount /system")
+        Shell.SU.run("mount -o rw,remount $partition")
         Shell.SU.run("mkdir $baseDest/$folderName")
         Shell.run("su", arrayOf("cp ${signed.absolutePath} ${dst.absolutePath}"), null, true)
         Shell.SU.run("chmod 0755 ${folder.absolutePath}")
         Shell.SU.run("chmod 0644 ${dst.absolutePath}")
-        Shell.SU.run("mount -o ro,remount /system")
+        Shell.SU.run("mount -o ro,remount $partition")
 
         MainScope().launch { listener?.invoke() }
     }
 }
 
 fun removeFromSystem(folderName: String) {
-    Shell.SU.run("mount -o rw,remount /system")
+    Shell.SU.run("mount -o rw,remount $partition")
     Shell.SU.run("rm -rf $baseDest/$folderName")
-    Shell.SU.run("mount -o ro,remount /system")
+    Shell.SU.run("mount -o ro,remount $partition")
 }
 
 fun Context.makeBaseDir(suffix: String): File {
@@ -293,15 +295,15 @@ fun Context.getManifest(base: File, suffix: String, packageName: String): File {
         "<manifest " +
                 "xmlns:android=\"http://schemas.android.com/apk/res/android\" " +
                 "package=\"$packageName.$opfpcontrol.$suffix.$overlay\" " +
-                "android:versionCode=\"1\" " +
-                "android:versionName=\"1\"> "
+                "android:versionCode=\"100\" " +
+                "android:versionName=\"100\"> "
     )
     builder.append("<uses-permission android:name=\"com.samsung.android.permission.SAMSUNG_OVERLAY_COMPONENT\" />")
     builder.append("<overlay android:targetPackage=\"$packageName\" />")
     builder.append("<application android:allowBackup=\"false\" android:hasCode=\"false\">")
     builder.append("<meta-data android:name=\"app_version\" android:value=\"v=${info.versionName}\" />")
     builder.append("<meta-data android:name=\"app_version_code\" android:value=\"v=${PackageInfoCompat.getLongVersionCode(info)}\" />")
-    builder.append("<meta-data android:name=\"overlay_version\" android:value=\"1\" />")
+    builder.append("<meta-data android:name=\"overlay_version\" android:value=\"100\" />")
     builder.append("<meta-data android:name=\"target_package\" android:value=\"$packageName\" />")
     builder.append("</application>")
     builder.append("</manifest>")
