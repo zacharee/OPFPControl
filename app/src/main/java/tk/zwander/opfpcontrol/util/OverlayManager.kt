@@ -75,7 +75,7 @@ val Context.aapt: String?
         val aapt = File(cacheDir, "aapt")
         if (aapt.exists()) return aapt.absolutePath
 
-        if (!assets.extractAsset("aapt$arch", aapt.absolutePath))
+        if (!assets.extractAsset("aapt", aapt.absolutePath))
             return null
 
         Shell.SH.run("chmod 755 ${aapt.absolutePath}")
@@ -90,18 +90,11 @@ val Context.zipalign: String?
             return zipalign.absolutePath
         }
 
-        if (!assets.extractAsset("zipalign$arch", zipalign.absolutePath))
+        if (!assets.extractAsset("zipalign", zipalign.absolutePath))
             return null
 
         Shell.SH.run("chmod 755 ${zipalign.absolutePath}")
         return zipalign.absolutePath
-    }
-
-val arch: String
-    get() = when {
-        Arrays.toString(Build.SUPPORTED_ABIS).contains("86") -> "86"
-        Build.SUPPORTED_64_BIT_ABIS.isNotEmpty() -> "64"
-        else -> ""
     }
 
 @ExperimentalCoroutinesApi
