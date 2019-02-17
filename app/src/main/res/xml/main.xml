@@ -5,7 +5,6 @@
     <tk.zwander.opfpcontrol.IconPreference
         android:key="fp_icon_path"
         android:title="@string/icon"
-        app:def_icon="@drawable/fod_icon_default"
         />
 
     <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
@@ -19,7 +18,6 @@
     <tk.zwander.opfpcontrol.IconPreference
         android:key="fp_icon_path_disabled"
         android:title="@string/icon_disabled"
-        app:def_icon="@drawable/fp_icon_default_disable"
         />
 
     <com.jaredrummler.android.colorpicker.ColorPreferenceCompat

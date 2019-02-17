@@ -103,10 +103,10 @@ fun Context.applyOverlay(listener: (() -> Unit)? = null) {
         val resources = arrayListOf<ResourceFileData>(
             ResourceImageData(
                 fod_icon_default, drawable_xxhdpi_v4,
-                prefs.fpIconNormalBmp?.tint(prefs.fpIconNormalTint)),
+                prefs.fpIconNormalTinted),
             ResourceImageData(
                 fp_icon_default_disable, drawable_xxhdpi_v4,
-                prefs.fpIconDisabledBmp?.tint(prefs.fpIconDisabledTint))
+                prefs.fpIconDisabledTinted)
         ).apply {
             if (!prefs.fpPlayAnim) {
                 add(ResourceFileData(
