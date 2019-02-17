@@ -43,6 +43,20 @@
 
     </RelativeLayout>
 
+    <tk.zwander.opfpcontrol.views.PreviewImageView
+        android:id="@+id/preview"
+        android:layout_width="174px"
+        android:layout_height="174px"
+        android:layout_marginBottom="32dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:selectableItemBackgroundBorderless"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:src="@drawable/fod_icon_default"
+        />
+
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

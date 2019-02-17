@@ -44,10 +44,9 @@ class PrefManager private constructor(private val context: Context) {
     val fpIconNormalNotNull: Bitmap
         get() = fpIconNormalBmp
             ?: BitmapFactory.decodeResource(context.resources, R.drawable.fod_icon_default)
-    val fpIconNormalTinted: Bitmap?
+    val fpIconNormalTinted: Bitmap
         get() = fpIconNormalTint.run {
-            if (this != Color.TRANSPARENT) fpIconNormalNotNull.tint(this)
-            else null
+            fpIconNormalNotNull.tint(this)
         }
 
     var fpIconDisabledBmp: Bitmap?
@@ -60,8 +59,7 @@ class PrefManager private constructor(private val context: Context) {
             ?: BitmapFactory.decodeResource(context.resources, R.drawable.fp_icon_default_disable)
     val fpIconDisabledTinted: Bitmap?
         get() = fpIconDisabledTint.run {
-            if (this != Color.TRANSPARENT) fpIconDisabledNotNull.tint(this)
-            else null
+            fpIconDisabledNotNull.tint(this)
         }
 
     var fpIconNormalTint: Int

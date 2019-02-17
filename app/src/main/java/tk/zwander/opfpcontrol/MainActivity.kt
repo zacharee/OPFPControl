@@ -77,6 +77,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             }
         }
 
+        preview.updateIcon()
+
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.content, Prefs(), "prefs")
@@ -88,11 +90,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         when (key) {
             PrefManager.FP_ICON_NORMAL,
             PrefManager.FP_ICON_NORMAL_TINT -> {
+                preview.updateIcon()
                 frag.iconNormal.updateIcon()
                 updateColors()
             }
             PrefManager.FP_ICON_DISABLED,
             PrefManager.FP_ICON_DISABLED_TINT -> {
+                preview.updateIcon()
                 frag.iconDisabled.updateIcon()
                 updateColors()
             }
