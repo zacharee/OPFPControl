@@ -1,4 +1,4 @@
-package tk.zwander.opfpcontrol
+package tk.zwander.opfpcontrol.prefs
 
 import android.content.Context
 import android.graphics.drawable.Drawable
@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
+import tk.zwander.opfpcontrol.R
 import tk.zwander.opfpcontrol.util.getProperIcon
 import tk.zwander.opfpcontrol.util.setProperIcon
 

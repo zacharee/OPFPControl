@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <tk.zwander.opfpcontrol.IconPreference
+    <tk.zwander.opfpcontrol.prefs.IconPreference
         android:key="fp_icon_path"
         android:title="@string/icon"
         />
@@ -24,7 +24,7 @@
         app:units="%"
         />
 
-    <tk.zwander.opfpcontrol.IconPreference
+    <tk.zwander.opfpcontrol.prefs.IconPreference
         android:key="fp_icon_path_disabled"
         android:title="@string/icon_disabled"
         />

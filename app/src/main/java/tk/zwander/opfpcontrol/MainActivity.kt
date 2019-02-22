@@ -15,6 +15,7 @@ import androidx.preference.PreferenceFragmentCompat
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import tk.zwander.opfpcontrol.prefs.IconPreference
 import tk.zwander.opfpcontrol.util.*
 import tk.zwander.opfpcontrol.views.AccentedAlertDialogBuilder
 
