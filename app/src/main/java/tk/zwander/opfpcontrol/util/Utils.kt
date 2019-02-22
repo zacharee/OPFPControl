@@ -26,8 +26,8 @@ fun Context.getProperIcon(key: String): BitmapDrawable {
     return BitmapDrawable(
         resources,
         when (key) {
-            PrefManager.FP_ICON_PATH -> prefs.fpIconNormalNotNull.tint(prefs.fpIconNormalTint)
-            PrefManager.FP_ICON_PATH_DISABLED -> prefs.fpIconDisabledNotNull.tint(prefs.fpIconDisabledTint)
+            PrefManager.FP_ICON_PATH -> prefs.fpIconNormalTinted
+            PrefManager.FP_ICON_PATH_DISABLED -> prefs.fpIconDisabledTinted
             else -> throw IllegalArgumentException("Bad key: $key")
         }
     )
@@ -50,6 +50,18 @@ fun Bitmap.tint(color: Int): Bitmap {
     canvas.drawBitmap(this, 0f, 0f, paint)
 
     return new
+}
+
+fun Bitmap.setOpacity(opacity: Int): Bitmap {
+    val opacityVal = opacity / 100f * 255
+    val copy = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(copy)
+    val paint = Paint()
+        .apply { alpha = opacityVal.toInt() }
+
+    canvas.drawBitmap(this, 0f, 0f, paint)
+
+    return copy
 }
 
 fun Bitmap?.asString(): String? {

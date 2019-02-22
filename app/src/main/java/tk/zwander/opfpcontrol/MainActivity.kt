@@ -89,13 +89,15 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         val frag = supportFragmentManager.findFragmentByTag("prefs") as Prefs
         when (key) {
             PrefManager.FP_ICON_NORMAL,
-            PrefManager.FP_ICON_NORMAL_TINT -> {
+            PrefManager.FP_ICON_NORMAL_TINT,
+            PrefManager.ICON_OPACITY_NORMAL -> {
                 preview.updateIcon()
                 frag.iconNormal.updateIcon()
                 updateColors()
             }
             PrefManager.FP_ICON_DISABLED,
-            PrefManager.FP_ICON_DISABLED_TINT -> {
+            PrefManager.FP_ICON_DISABLED_TINT,
+            PrefManager.ICON_OPACITY_DISABLED -> {
                 preview.updateIcon()
                 frag.iconDisabled.updateIcon()
                 updateColors()

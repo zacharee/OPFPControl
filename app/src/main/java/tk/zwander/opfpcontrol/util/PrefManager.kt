@@ -26,6 +26,9 @@ class PrefManager private constructor(private val context: Context) {
         const val FP_ICON_NORMAL_TINT = "fp_icon_normal_tint"
         const val FP_ICON_DISABLED_TINT = "fp_icon_disabled_tint"
 
+        const val ICON_OPACITY_NORMAL = "icon_opacity_normal"
+        const val ICON_OPACITY_DISABLED = "icon_opacity_disabled"
+
         const val FP_ICON_PATH = "fp_icon_path"
         const val FP_ICON_PATH_DISABLED = "fp_icon_path_disabled"
 
@@ -46,7 +49,9 @@ class PrefManager private constructor(private val context: Context) {
             ?: BitmapFactory.decodeResource(context.resources, R.drawable.fod_icon_default)
     val fpIconNormalTinted: Bitmap
         get() = fpIconNormalTint.run {
-            fpIconNormalNotNull.tint(this)
+            fpIconNormalNotNull
+                .tint(this)
+                .setOpacity(iconOpacityNormal)
         }
 
     var fpIconDisabledBmp: Bitmap?
@@ -59,7 +64,9 @@ class PrefManager private constructor(private val context: Context) {
             ?: BitmapFactory.decodeResource(context.resources, R.drawable.fp_icon_default_disable)
     val fpIconDisabledTinted: Bitmap?
         get() = fpIconDisabledTint.run {
-            fpIconDisabledNotNull.tint(this)
+            fpIconDisabledNotNull
+                .tint(this)
+                .setOpacity(iconOpacityDisabled)
         }
 
     var fpIconNormalTint: Int
@@ -74,6 +81,12 @@ class PrefManager private constructor(private val context: Context) {
         set(@ColorInt value) {
             putInt(FP_ICON_DISABLED_TINT, value)
         }
+
+    val iconOpacityNormal: Int
+        get() = getInt(ICON_OPACITY_NORMAL, 100)
+
+    val iconOpacityDisabled: Int
+        get() = getInt(ICON_OPACITY_DISABLED, 100)
 
     val fpPlayAnim: Boolean
         get() = getBoolean(FP_PLAY_ANIM, true)

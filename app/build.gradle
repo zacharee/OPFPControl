@@ -41,6 +41,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0-alpha03'
 
     implementation 'com.github.zacharee:colorpicker:040874fb27'
+    implementation 'com.github.zacharee:SeekBarPreference:f78184e719'
 //    implementation 'com.github.topjohnwu:libsu:2.2.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'eu.chainfire:librootjava:1.2.0'

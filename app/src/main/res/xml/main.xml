@@ -15,6 +15,15 @@
         app:cpv_showAlphaSlider="true"
         />
 
+    <tk.zwander.seekbarpreference.SeekBarPreference
+        android:title="@string/icon_opacity_normal"
+        android:key="icon_opacity_normal"
+        android:defaultValue="100"
+        app:minValue="0"
+        app:maxValue="100"
+        app:units="%"
+        />
+
     <tk.zwander.opfpcontrol.IconPreference
         android:key="fp_icon_path_disabled"
         android:title="@string/icon_disabled"
@@ -26,6 +35,15 @@
         android:title="@string/tint_disabled"
         app:cpv_allowCustom="true"
         app:cpv_showAlphaSlider="true"
+        />
+
+    <tk.zwander.seekbarpreference.SeekBarPreference
+        android:title="@string/icon_opacity_disabled"
+        android:key="icon_opacity_disabled"
+        android:defaultValue="100"
+        app:minValue="0"
+        app:maxValue="100"
+        app:units="%"
         />
 
     <tk.zwander.opfpcontrol.prefs.AccentedSwitchPreference

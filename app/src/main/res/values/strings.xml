@@ -6,6 +6,9 @@
     <string name="icon">Icon Image Normal</string>
     <string name="icon_disabled">Icon Image Disabled</string>
     <string name="play_anim">Show Animation</string>
+    <string name="icon_opacity_normal">Icon Opacity Normal</string>
+    <string name="icon_opacity_disabled">Icon Opacity Disabled</string>
+
     <string name="apply">Apply</string>
     <string name="reboot">Reboot</string>
     <string name="later">Later</string>
