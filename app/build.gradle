@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+def version = 2
+
 android {
     compileSdkVersion 28
 
@@ -11,8 +13,8 @@ android {
         applicationId "tk.zwander.opfpcontrol"
         minSdkVersion 28
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        versionCode version
+        versionName version.toString()
     }
 
     buildTypes {
