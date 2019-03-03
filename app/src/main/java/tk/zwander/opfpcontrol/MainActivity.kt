@@ -87,21 +87,17 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        val frag = supportFragmentManager.findFragmentByTag("prefs") as Prefs
+        val frag = supportFragmentManager.findFragmentByTag("prefs") as Prefs?
         when (key) {
             PrefManager.FP_ICON_NORMAL,
             PrefManager.FP_ICON_NORMAL_TINT,
-            PrefManager.ICON_OPACITY_NORMAL -> {
-                preview.updateIcon()
-                frag.iconNormal.updateIcon()
-                updateColors()
-            }
+            PrefManager.ICON_OPACITY_NORMAL,
             PrefManager.FP_ICON_DISABLED,
             PrefManager.FP_ICON_DISABLED_TINT,
             PrefManager.ICON_OPACITY_DISABLED -> {
                 preview.updateIcon()
-                frag.iconDisabled.updateIcon()
                 updateColors()
+                frag?.updateIcons()
             }
         }
     }
@@ -183,6 +179,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                         context?.prefs?.fpIconDisabledBmp = getBitmapFromUri(data?.data)
                     }
                 }
+            }
+        }
+
+        fun updateIcons() {
+            if (isVisible) {
+                iconNormal.updateIcon()
+                iconDisabled.updateIcon()
             }
         }
 
