@@ -25,7 +25,7 @@ object RootStuff {
         val iPMClass = Class.forName("android.os.IPowerManager")
 
         @SuppressLint("PrivateApi")
-        val pm = kotlin.run {
+        val pm = run {
             val serviceManagerClass = Class.forName("android.os.ServiceManager")
             val iPMStubClass = Class.forName("android.os.IPowerManager\$Stub")
 
