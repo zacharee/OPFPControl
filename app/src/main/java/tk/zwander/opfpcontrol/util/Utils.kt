@@ -4,12 +4,29 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import androidx.annotation.ColorInt
 import androidx.core.graphics.ColorUtils
+import com.topjohnwu.superuser.io.SuFile
+import eu.chainfire.libsuperuser.Shell
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import tk.zwander.opfpcontrol.App
+import tk.zwander.opfpcontrol.BuildConfig
+import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileReader
+import java.lang.Exception
+import java.lang.StringBuilder
+import kotlin.math.max
 
+val MAGISK_PATH = "/sbin/.magisk"
+val MAGISK_MODULE_PATH = "$MAGISK_PATH/img/opfpcontrol"
+
+val mainHandler = Handler(Looper.getMainLooper())
 
 val Context.app: App
     get() = applicationContext as App
@@ -19,8 +36,24 @@ val Context.prefs: PrefManager
 
 val Context.isInstalled: Boolean
     get() = packageManager.getPackageArchiveInfo(
-        "${Keys.baseDest}/${Keys.folderName}/${Keys.folderName}.apk",
+        "$appDir/${Keys.folderName}/${Keys.folderName}.apk",
         PackageManager.GET_META_DATA) != null
+
+val moduleExists: Boolean
+    get() = SuFile(MAGISK_MODULE_PATH).exists()
+
+val moduleEnabled: Boolean
+    get() = !SuFile(MAGISK_MODULE_PATH, "disable").exists()
+            && SuFile(MAGISK_PATH).exists()
+
+val appDir: File
+    get() = if (moduleEnabled)
+        SuFile(MAGISK_MODULE_PATH, "/system/app").also {
+            if (!it.exists()) {
+                it.mkdirs()
+            }
+        } else
+        SuFile("/system_root/app")
 
 fun Context.getProperIcon(key: String): BitmapDrawable {
     return BitmapDrawable(
@@ -96,7 +129,7 @@ fun brightenAndOpacify(@ColorInt color: Int): Int {
 
     ColorUtils.RGBToHSL(Color.red(color), Color.green(color), Color.blue(color), hsl)
 
-    hsl[2] = Math.max(0.175f, hsl[2])
+    hsl[2] = max(0.175f, hsl[2])
 
     return ColorUtils.HSLToColor(hsl)
 }
@@ -106,4 +139,45 @@ fun isDark(@ColorInt color: Int) = ColorUtils.calculateLuminance(color) < 0.5f
 @ColorInt
 fun progressAccent(@ColorInt color: Int): Int {
     return ColorUtils.blendARGB(color, if (isDark(color)) Color.WHITE else Color.BLACK, 0.2f)
+}
+
+fun createMagiskModule(result: ((needsToReboot: Boolean) -> Unit)? = null) {
+    GlobalScope.launch {
+        val doesExist = moduleExists
+        val currentVersion = try {
+            BufferedReader(FileReader(SuFile("$MAGISK_MODULE_PATH/module.prop")))
+                .lines()
+                .filter { it.startsWith("versionCode") }
+                .findFirst()
+                .get()
+                .split("=")[1]
+                .toInt()
+        } catch (e: Exception) {
+            0
+        }
+
+        val needsToUpdate = !doesExist || currentVersion < BuildConfig.MODULE_VERSION
+
+        if (needsToUpdate) {
+            val prop = StringBuilder()
+                .appendln("name=OPFPControl Module")
+                .appendln("version=${BuildConfig.MODULE_VERSION}")
+                .appendln("versionCode=${BuildConfig.MODULE_VERSION}")
+                .appendln("author=Zachary Wander")
+                .appendln("description=Systemlessly install FP themes")
+
+            Shell.Builder()
+                .useSU()
+                .addCommand("mkdir -p $MAGISK_MODULE_PATH")
+                .addCommand("chmod -R 0755 $MAGISK_MODULE_PATH")
+                .addCommand("touch $MAGISK_MODULE_PATH/auto_mount")
+                .addCommand("touch $MAGISK_MODULE_PATH/update")
+                .addCommand("echo \"$prop\" > $MAGISK_MODULE_PATH/module.prop")
+                .open()
+        }
+
+        mainHandler.post {
+            result?.invoke(needsToUpdate)
+        }
+    }
 }

@@ -6,12 +6,12 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.core.content.pm.PackageInfoCompat
 import com.android.apksig.ApkSigner
+import com.topjohnwu.superuser.io.SuFile
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import tk.zwander.opfpcontrol.util.Keys.baseDest
 import tk.zwander.opfpcontrol.util.Keys.drawable
 import tk.zwander.opfpcontrol.util.Keys.drawable_xxhdpi_v4
 import tk.zwander.opfpcontrol.util.Keys.fod_icon_default
@@ -50,7 +50,6 @@ object Keys {
     const val suffix = "fp"
     const val overlay = "overlay"
 
-    const val baseDest = "/system_root/system/app"
     const val partition = "/system_root"
     const val folderName = "$systemuiPkg.$opfpcontrol.$suffix.$overlay"
 
@@ -183,8 +182,8 @@ fun makeEmptyAnimationList(): String {
         .toString()
 }
 
-fun makeOverlayFile(base: File, suffix: String, type: OverlayType): File {
-    return File(base, "${suffix}_$type.apk")
+fun makeOverlayFile(base: File, suffix: String, type: OverlayType): SuFile {
+    return SuFile(base, "${suffix}_$type.apk")
 }
 
 fun makeResDir(base: File): File {
@@ -200,7 +199,7 @@ fun makeResDir(base: File): File {
 fun Context.doCompileAlignAndSign(
     targetPackage: String,
     suffix: String,
-    listener: ((apk: File) -> Unit)? = null,
+    listener: ((apk: SuFile) -> Unit)? = null,
     resFiles: List<ResourceFileData>
 ) {
     val base = makeBaseDir(suffix)
@@ -243,27 +242,35 @@ fun Context.doCompileAlignAndSign(
 }
 
 @ExperimentalCoroutinesApi
-fun installToSystem(folderName: String, signed: File, listener: (() -> Unit)? = null) {
+fun installToSystem(folderName: String, signed: SuFile, listener: (() -> Unit)? = null) {
     GlobalScope.launch {
-        val folder = File("$baseDest/", folderName)
+        if (!moduleEnabled) Shell.SU.run("mount -o rw,remount $partition")
 
-        val dst = File(folder, "$folderName.apk")
+        val folder = SuFile(appDir, folderName)
+        if (!folder.exists()) folder.mkdirs()
 
-        Shell.SU.run("mount -o rw,remount $partition")
-        Shell.SU.run("mkdir $baseDest/$folderName")
-        Shell.run("su", arrayOf("cp ${signed.absolutePath} ${dst.absolutePath}"), null, true)
-        Shell.SU.run("chmod 0755 ${folder.absolutePath}")
-        Shell.SU.run("chmod 0644 ${dst.absolutePath}")
-        Shell.SU.run("mount -o ro,remount $partition")
+        val dst = SuFile(folder, "$folderName.apk")
+
+        folder.setWritable(true, true)
+        folder.setReadable(true, false)
+        folder.setExecutable(true, false)
+
+        Shell.SU.run("cp ${signed.absolutePath} ${dst.absolutePath}")
+
+        dst.setWritable(true, true)
+        dst.setReadable(true, false)
+        dst.setExecutable(false)
+
+        if (!moduleEnabled) Shell.SU.run("mount -o ro,remount $partition")
 
         MainScope().launch { listener?.invoke() }
     }
 }
 
 fun removeFromSystem(folderName: String) {
-    Shell.SU.run("mount -o rw,remount $partition")
-    Shell.SU.run("rm -rf $baseDest/$folderName")
-    Shell.SU.run("mount -o ro,remount $partition")
+    if (!moduleEnabled) Shell.SU.run("mount -o rw,remount $partition")
+    Shell.SU.run("rm -rf $appDir/$folderName")
+    if (!moduleEnabled) Shell.SU.run("mount -o ro,remount $partition")
 }
 
 fun Context.makeBaseDir(suffix: String): File {

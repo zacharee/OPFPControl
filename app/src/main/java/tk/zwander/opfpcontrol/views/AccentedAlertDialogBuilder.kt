@@ -3,9 +3,10 @@ package tk.zwander.opfpcontrol.views
 import android.content.Context
 import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import tk.zwander.opfpcontrol.util.prefs
 
-class AccentedAlertDialogBuilder(context: Context) : AlertDialog.Builder(context) {
+class AccentedAlertDialogBuilder(context: Context) : MaterialAlertDialogBuilder(context) {
     override fun create(): AlertDialog {
         val dialog = super.create()
 

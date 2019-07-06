@@ -12,9 +12,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import tk.zwander.opfpcontrol.prefs.IconPreference
 import tk.zwander.opfpcontrol.util.*
 import tk.zwander.opfpcontrol.views.AccentedAlertDialogBuilder
@@ -23,13 +26,39 @@ import tk.zwander.opfpcontrol.views.AccentedAlertDialogBuilder
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
-        if (!Shell.SU.available()) {
-            finish()
+        preview.updateIcon()
 
-            return
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, Prefs(), "prefs")
+            .commit()
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.root)
+            .setMessage(R.string.waiting_for_root)
+            .setCancelable(false)
+            .show()
+
+        GlobalScope.launch {
+            val hasSu = Shell.SU.available()
+
+            mainHandler.post {
+                dialog.dismiss()
+
+                if (hasSu) {
+                    setup()
+                } else {
+                    finish()
+                }
+            }
         }
+    }
+
+    private fun setup() {
+        createMagiskModule()
 
         prefs.registerOnSharedPreferenceChangeListener(this)
         updateColors()
@@ -77,13 +106,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                 }
             }
         }
-
-        preview.updateIcon()
-
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.content, Prefs(), "prefs")
-            .commit()
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -95,9 +117,11 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             PrefManager.FP_ICON_DISABLED,
             PrefManager.FP_ICON_DISABLED_TINT,
             PrefManager.ICON_OPACITY_DISABLED -> {
-                preview.updateIcon()
-                updateColors()
-                frag?.updateIcons()
+                mainHandler.post {
+                    preview.updateIcon()
+                    updateColors()
+                    frag?.updateIcons()
+                }
             }
         }
     }
