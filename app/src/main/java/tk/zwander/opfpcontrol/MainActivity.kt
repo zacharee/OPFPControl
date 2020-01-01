@@ -168,8 +168,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             const val REQ_DIS = 101
         }
 
-        val iconNormal by lazy { findPreference(PrefManager.FP_ICON_PATH) as IconPreference }
-        val iconDisabled by lazy { findPreference(PrefManager.FP_ICON_PATH_DISABLED) as IconPreference }
+        val iconNormal by lazy { findPreference<IconPreference>(PrefManager.FP_ICON_PATH) as IconPreference }
+        val iconDisabled by lazy { findPreference<IconPreference>(PrefManager.FP_ICON_PATH_DISABLED) as IconPreference }
 
         val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)

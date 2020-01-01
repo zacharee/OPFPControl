@@ -394,7 +394,7 @@ fun Context.signOverlay(overlayFile: File, signed: File) {
         .build()
         .sign()
 
-    Shell.SH.run("chmod 777 ${signed.absolutePath}")
+    Shell.Pool.SH.run("chmod 777 ${signed.absolutePath}")
 }
 
 fun AssetManager.extractAsset(assetPath: String, devicePath: String, cipher: Cipher?): Boolean {

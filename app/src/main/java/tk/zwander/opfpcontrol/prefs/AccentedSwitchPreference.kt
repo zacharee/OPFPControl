@@ -32,7 +32,7 @@ class AccentedSwitchPreference : SwitchPreference, SharedPreferences.OnSharedPre
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
 
-        val switchView = holder.findViewById(AndroidResources.ANDROID_R_SWITCH_WIDGET) as Switch
+        val switchView = holder.findViewById(android.R.id.switch_widget) as Switch
         val color = if (switchView.isChecked) context.prefs.fpIconNormalTint else Color.TRANSPARENT
 
         switchView.thumbDrawable?.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
