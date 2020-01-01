@@ -7,6 +7,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
+import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.core.graphics.ColorUtils
 import com.topjohnwu.superuser.io.SuFile
@@ -28,6 +29,12 @@ val MAGISK_MODULE_PATH = "$MAGISK_PATH/img/opfpcontrol"
 
 val mainHandler = Handler(Looper.getMainLooper())
 
+val rootShell by lazy {
+    Shell.Builder()
+        .useSU()
+        .open()
+}
+
 val Context.app: App
     get() = applicationContext as App
 
@@ -35,9 +42,7 @@ val Context.prefs: PrefManager
     get() = PrefManager.getInstance(this)
 
 val Context.isInstalled: Boolean
-    get() = packageManager.getPackageArchiveInfo(
-        "$appDir/${Keys.folderName}/${Keys.folderName}.apk",
-        PackageManager.GET_META_DATA) != null
+    get() = File("$appDir/${Keys.folderName}/${Keys.folderName}.apk").exists()
 
 val moduleExists: Boolean
     get() = SuFile(MAGISK_MODULE_PATH).exists()
@@ -142,42 +147,40 @@ fun progressAccent(@ColorInt color: Int): Int {
 }
 
 fun createMagiskModule(result: ((needsToReboot: Boolean) -> Unit)? = null) {
-    GlobalScope.launch {
-        val doesExist = moduleExists
-        val currentVersion = try {
-            BufferedReader(FileReader(SuFile("$MAGISK_MODULE_PATH/module.prop")))
-                .lines()
-                .filter { it.startsWith("versionCode") }
-                .findFirst()
-                .get()
-                .split("=")[1]
-                .toInt()
-        } catch (e: Exception) {
-            0
-        }
+    val doesExist = moduleExists
+    val currentVersion = try {
+        BufferedReader(FileReader(SuFile("$MAGISK_MODULE_PATH/module.prop")))
+            .lines()
+            .filter { it.startsWith("versionCode") }
+            .findFirst()
+            .get()
+            .split("=")[1]
+            .toInt()
+    } catch (e: Exception) {
+        0
+    }
 
-        val needsToUpdate = !doesExist || currentVersion < BuildConfig.MODULE_VERSION
+    val needsToUpdate = !doesExist || currentVersion < BuildConfig.MODULE_VERSION
 
-        if (needsToUpdate) {
-            val prop = StringBuilder()
-                .appendln("name=OPFPControl Module")
-                .appendln("version=${BuildConfig.MODULE_VERSION}")
-                .appendln("versionCode=${BuildConfig.MODULE_VERSION}")
-                .appendln("author=Zachary Wander")
-                .appendln("description=Systemlessly install FP themes")
+    if (needsToUpdate) {
+        val prop = StringBuilder()
+            .appendln("name=OPFPControl Module")
+            .appendln("version=${BuildConfig.MODULE_VERSION}")
+            .appendln("versionCode=${BuildConfig.MODULE_VERSION}")
+            .appendln("author=Zachary Wander")
+            .appendln("description=Systemlessly install FP themes")
 
-            Shell.Builder()
-                .useSU()
-                .addCommand("mkdir -p $MAGISK_MODULE_PATH")
-                .addCommand("chmod -R 0755 $MAGISK_MODULE_PATH")
-                .addCommand("touch $MAGISK_MODULE_PATH/auto_mount")
-                .addCommand("touch $MAGISK_MODULE_PATH/update")
-                .addCommand("echo \"$prop\" > $MAGISK_MODULE_PATH/module.prop")
-                .open()
-        }
+        Shell.Builder()
+            .useSU()
+            .addCommand("mkdir -p $MAGISK_MODULE_PATH")
+            .addCommand("chmod -R 0755 $MAGISK_MODULE_PATH")
+            .addCommand("touch $MAGISK_MODULE_PATH/auto_mount")
+            .addCommand("touch $MAGISK_MODULE_PATH/update")
+            .addCommand("echo \"$prop\" > $MAGISK_MODULE_PATH/module.prop")
+            .open()
+    }
 
-        mainHandler.post {
-            result?.invoke(needsToUpdate)
-        }
+    mainHandler.post {
+        result?.invoke(needsToUpdate)
     }
 }

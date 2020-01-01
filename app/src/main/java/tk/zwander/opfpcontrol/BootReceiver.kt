@@ -4,12 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import eu.chainfire.libsuperuser.Shell
-import tk.zwander.opfpcontrol.util.Keys
-import tk.zwander.opfpcontrol.util.app
-import tk.zwander.opfpcontrol.util.isInstalled
-import tk.zwander.opfpcontrol.util.prefs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import tk.zwander.opfpcontrol.util.*
 
-class BootReceiver : BroadcastReceiver() {
+class BootReceiver : BroadcastReceiver(), CoroutineScope by MainScope() {
     companion object {
         const val ACTION_DO_REBOOT = "${BuildConfig.APPLICATION_ID}.intent.action.DO_REBOOT"
     }
@@ -19,15 +20,9 @@ class BootReceiver : BroadcastReceiver() {
             Intent.ACTION_LOCKED_BOOT_COMPLETED,
             Intent.ACTION_BOOT_COMPLETED -> {
                 if (context.isInstalled) {
-                    Shell.SU.run("cmd overlay enable ${Keys.systemuiPkg}.${Keys.opfpcontrol}.${Keys.suffix}.${Keys.overlay}")
+                    rootShell.addCommand("cmd overlay enable ${Keys.systemuiPkg}.${Keys.opfpcontrol}.${Keys.suffix}.${Keys.overlay}")
 
                     context.app.notifyForSecondReboot()
-                }
-            }
-            ACTION_DO_REBOOT -> {
-                context.prefs.needsAdditionalReboot = false
-                context.app.ipcReceiver.postIPCAction {
-                    it.reboot(null)
                 }
             }
         }

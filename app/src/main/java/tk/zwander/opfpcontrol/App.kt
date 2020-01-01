@@ -7,31 +7,31 @@ import android.content.Intent
 import eu.chainfire.librootjava.RootIPCReceiver
 import eu.chainfire.librootjava.RootJava
 import eu.chainfire.libsuperuser.Shell
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import tk.zwander.opfpcontrol.root.RootStuff
 import tk.zwander.opfpcontrol.util.prefs
+import tk.zwander.opfpcontrol.util.rootShell
 
-class App : Application() {
+class App : Application(), CoroutineScope by MainScope() {
     val ipcReceiver by lazy { IPCReceiverImpl(this, 100) }
-    val nm by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+    private val nm by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 
     override fun onCreate() {
         super.onCreate()
 
-        GlobalScope.launch {
-            Shell.SU.run("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}")
-            Shell.SU.run("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}")
-
-            Shell.SU.run(
-                RootJava.getLaunchScript(
-                    this@App,
-                    RootStuff::class.java,
-                    null, null, null,
-                    "${BuildConfig.APPLICATION_ID}:root"))
-        }
-
         ipcReceiver.setContext(this)
+
+        launch {
+            async {
+                rootShell.addCommand(
+                    RootJava.getLaunchScript(
+                        this@App,
+                        RootStuff::class.java,
+                        null, null, null,
+                        "${BuildConfig.APPLICATION_ID}:root")
+                )
+            }
+        }
 
         val channel = NotificationChannel(
             "opfp_main",
@@ -47,13 +47,14 @@ class App : Application() {
                 .setContentTitle(resources.getText(R.string.reboot))
                 .setContentText(resources.getText(R.string.reboot_first_again_desc))
                 .setSmallIcon(R.mipmap.ic_launcher)
+                .setStyle(Notification.BigTextStyle())
                 .setContentIntent(
-                    PendingIntent.getBroadcast(
+                    PendingIntent.getActivity(
                         this,
                         100,
                         Intent(BootReceiver.ACTION_DO_REBOOT).apply {
                             `package` = packageName
-                            component = ComponentName(this@App, BootReceiver::class.java)
+                            component = ComponentName(this@App, BCRRebootActivity::class.java)
                         },
                         0
                     )

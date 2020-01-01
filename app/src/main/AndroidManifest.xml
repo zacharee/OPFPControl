@@ -24,6 +24,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".BCRRebootActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Null">
+            <intent-filter>
+                <action android:name="tk.zwander.opfpcontrol.intent.action.DO_REBOOT" />
+            </intent-filter>
+        </activity>
 
         <receiver
             android:name=".BootReceiver">

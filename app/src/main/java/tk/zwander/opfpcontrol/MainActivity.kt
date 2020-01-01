@@ -10,20 +10,20 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import eu.chainfire.librootjava.RootJava
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import tk.zwander.opfpcontrol.prefs.IconPreference
+import tk.zwander.opfpcontrol.root.RootStuff
 import tk.zwander.opfpcontrol.util.*
-import tk.zwander.opfpcontrol.views.AccentedAlertDialogBuilder
 
 @ExperimentalCoroutinesApi
-class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
+class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener, CoroutineScope by MainScope() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -36,31 +36,53 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             .replace(R.id.content, Prefs(), "prefs")
             .commit()
 
-        val dialog = MaterialAlertDialogBuilder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(R.string.root)
             .setMessage(R.string.waiting_for_root)
             .setCancelable(false)
-            .show()
+            .create()
+            .apply {
+                setOnShowListener {
+                    launch {
+                        val hasSu = withContext(Dispatchers.Main) {
+                            Shell.SU.available()
+                        }
 
-        GlobalScope.launch {
-            val hasSu = Shell.SU.available()
+                        if (hasSu) {
+                            setup().join()
+                        } else {
+                            Toast.makeText(this@MainActivity, R.string.root_not_detected, Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
 
-            mainHandler.post {
-                dialog.dismiss()
+                        it.dismiss()
+                    }
+                }
+                show()
+            }
+    }
 
-                if (hasSu) {
-                    setup()
-                } else {
-                    finish()
+    private fun setup() = launch {
+        async {
+            rootShell.addCommand("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}")
+            rootShell.addCommand("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}")
+
+            createMagiskModule {
+                if (it) {
+                    MaterialAlertDialogBuilder(this@MainActivity)
+                        .setCancelable(false)
+                        .setTitle(R.string.magisk_module_installed)
+                        .setMessage(R.string.magisk_module_installed_desc)
+                        .setPositiveButton(R.string.reboot) { _, _ ->
+                            app.ipcReceiver.postIPCAction { ipc -> ipc.reboot(null) }
+                        }
+                        .setNegativeButton(R.string.later, null)
+                        .show()
                 }
             }
         }
-    }
 
-    private fun setup() {
-        createMagiskModule()
-
-        prefs.registerOnSharedPreferenceChangeListener(this)
+        prefs.registerOnSharedPreferenceChangeListener(this@MainActivity)
         updateColors()
 
         apply.apply {
@@ -74,7 +96,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
                     prefs.needsAdditionalReboot = !wasInstalledBeforeApply
 
-                    AccentedAlertDialogBuilder(this@MainActivity)
+                    MaterialAlertDialogBuilder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(
                             if (wasInstalledBeforeApply)
@@ -89,14 +111,16 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
 
         remove.apply {
-            visibility = if (isInstalled) View.VISIBLE else View.GONE
+            visibility = withContext(Dispatchers.Main) {
+                if (isInstalled) View.VISIBLE else View.GONE
+            }
             setOnClickListener {
                 progress_remove.visibility = View.VISIBLE
 
                 deleteOverlay {
                     progress_remove.visibility = View.GONE
 
-                    AccentedAlertDialogBuilder(this@MainActivity)
+                    MaterialAlertDialogBuilder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(R.string.reboot_uninstall_desc)
                         .setPositiveButton(R.string.reboot) { _, _ -> app.ipcReceiver.postIPCAction { it.reboot(null) } }
