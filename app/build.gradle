@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
-def version = 4
+def version = 5
 def moduleVersion = 1
 
 android {
