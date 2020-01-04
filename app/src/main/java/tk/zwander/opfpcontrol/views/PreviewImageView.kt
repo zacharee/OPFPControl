@@ -5,9 +5,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.ImageView
+import androidx.appcompat.widget.AppCompatImageView
 import tk.zwander.opfpcontrol.util.prefs
 
-class PreviewImageView : ImageView {
+class PreviewImageView : AppCompatImageView {
     enum class State {
         NORMAL,
         DISABLED

@@ -3,11 +3,9 @@ package tk.zwander.opfpcontrol
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import eu.chainfire.libsuperuser.Shell
+import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import tk.zwander.opfpcontrol.util.*
 
 class BootReceiver : BroadcastReceiver(), CoroutineScope by MainScope() {
@@ -19,8 +17,8 @@ class BootReceiver : BroadcastReceiver(), CoroutineScope by MainScope() {
         when (intent.action) {
             Intent.ACTION_LOCKED_BOOT_COMPLETED,
             Intent.ACTION_BOOT_COMPLETED -> {
-                if (context.isInstalled) {
-                    rootShell.addCommand("cmd overlay enable ${Keys.systemuiPkg}.${Keys.opfpcontrol}.${Keys.suffix}.${Keys.overlay}")
+                if (isInstalled) {
+                    Shell.su("cmd overlay enable ${Keys.systemuiPkg}.${Keys.opfpcontrol}.${Keys.suffix}.${Keys.overlay}").exec()
 
                     context.app.notifyForSecondReboot()
                 }

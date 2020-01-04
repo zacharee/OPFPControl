@@ -5,7 +5,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 def version = 5
-def moduleVersion = 1
+def moduleVersion = 2
 
 android {
     compileSdkVersion 28
@@ -54,8 +54,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'eu.chainfire:librootjava:1.3.0'
 
-    implementation "com.github.topjohnwu.libsu:core:2.5.0"
-    implementation "com.github.topjohnwu.libsu:io:2.5.0"
+    implementation "com.github.topjohnwu.libsu:core:2.5.1"
+    implementation "com.github.topjohnwu.libsu:io:2.5.1"
+//    implementation "com.github.topjohnwu.libsu:busybox:2.5.1"
 
-    implementation 'eu.chainfire:libsuperuser:1.1.0.+'
+//    implementation 'eu.chainfire:libsuperuser:1.1.0.+'
 }

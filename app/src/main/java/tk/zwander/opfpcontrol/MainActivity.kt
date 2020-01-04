@@ -9,17 +9,16 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import eu.chainfire.librootjava.RootJava
-import eu.chainfire.libsuperuser.Shell
+import com.topjohnwu.superuser.Shell
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import tk.zwander.opfpcontrol.prefs.IconPreference
-import tk.zwander.opfpcontrol.root.RootStuff
 import tk.zwander.opfpcontrol.util.*
 
 @ExperimentalCoroutinesApi
@@ -44,8 +43,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             .apply {
                 setOnShowListener {
                     launch {
-                        val hasSu = withContext(Dispatchers.Main) {
-                            Shell.SU.available()
+                        val hasSu = withContext(Dispatchers.IO) {
+                            Shell.rootAccess()
                         }
 
                         if (hasSu) {
@@ -63,22 +62,20 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     private fun setup() = launch {
-        async {
-            rootShell.addCommand("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}")
-            rootShell.addCommand("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}")
+        Shell.su("pm grant $packageName ${android.Manifest.permission.WRITE_SECURE_SETTINGS}").submit()
+        Shell.su("pm grant $packageName ${android.Manifest.permission.WRITE_EXTERNAL_STORAGE}").submit()
 
-            createMagiskModule {
-                if (it) {
-                    MaterialAlertDialogBuilder(this@MainActivity)
-                        .setCancelable(false)
-                        .setTitle(R.string.magisk_module_installed)
-                        .setMessage(R.string.magisk_module_installed_desc)
-                        .setPositiveButton(R.string.reboot) { _, _ ->
-                            app.ipcReceiver.postIPCAction { ipc -> ipc.reboot(null) }
-                        }
-                        .setNegativeButton(R.string.later, null)
-                        .show()
-                }
+        createMagiskModule {
+            if (it) {
+                MaterialAlertDialogBuilder(this@MainActivity)
+                    .setCancelable(false)
+                    .setTitle(R.string.magisk_module_installed)
+                    .setMessage(R.string.magisk_module_installed_desc)
+                    .setPositiveButton(R.string.reboot) { _, _ ->
+                        reboot()
+                    }
+                    .setNegativeButton(R.string.later, null)
+                    .show()
             }
         }
 
@@ -102,7 +99,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                             if (wasInstalledBeforeApply)
                                 R.string.reboot_others_desc else R.string.reboot_first_desc
                         )
-                        .setPositiveButton(R.string.reboot) { _, _ -> app.ipcReceiver.postIPCAction { it.reboot(null) } }
+                        .setPositiveButton(R.string.reboot) { _, _ -> reboot() }
                         .setNegativeButton(R.string.later, null)
                         .setCancelable(false)
                         .show()
@@ -111,7 +108,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
 
         remove.apply {
-            visibility = withContext(Dispatchers.Main) {
+            visibility = withContext(Dispatchers.IO) {
                 if (isInstalled) View.VISIBLE else View.GONE
             }
             setOnClickListener {
@@ -123,7 +120,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     MaterialAlertDialogBuilder(this@MainActivity)
                         .setTitle(R.string.reboot)
                         .setMessage(R.string.reboot_uninstall_desc)
-                        .setPositiveButton(R.string.reboot) { _, _ -> app.ipcReceiver.postIPCAction { it.reboot(null) } }
+                        .setPositiveButton(R.string.reboot) { _, _ -> reboot() }
                         .setNegativeButton(R.string.later, null)
                         .setCancelable(false)
                         .show()

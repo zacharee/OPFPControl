@@ -1,17 +1,16 @@
 package tk.zwander.opfpcontrol.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.os.Build
+import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
 import com.android.apksig.ApkSigner
+import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.io.SuFile
-import eu.chainfire.libsuperuser.Shell
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import tk.zwander.opfpcontrol.util.Keys.drawable
 import tk.zwander.opfpcontrol.util.Keys.drawable_xxhdpi_v4
 import tk.zwander.opfpcontrol.util.Keys.fod_icon_default
@@ -71,28 +70,29 @@ object Keys {
 
 val Context.aapt: String?
     get() {
-        val aapt = File(cacheDir, "aapt")
-        if (aapt.exists()) return aapt.absolutePath
+        val aapt = SuFile(cacheDir, "aapt")
 
-        if (!assets.extractAsset("aapt", aapt.absolutePath))
+        if (!aapt.exists() && !assets.extractAsset("aapt", aapt.absolutePath))
             return null
 
-        Shell.SH.run("chmod 755 ${aapt.absolutePath}")
+        aapt.setExecutable(true)
+        aapt.setWritable(true)
+        aapt.setReadable(true)
+
         return aapt.absolutePath
     }
 
 val Context.zipalign: String?
     get() {
         val zipalign = File(cacheDir, "zipalign")
-        if (zipalign.exists()) {
-            Shell.SH.run("chmod 755 ${zipalign.absolutePath}")
-            return zipalign.absolutePath
-        }
 
-        if (!assets.extractAsset("zipalign", zipalign.absolutePath))
+        if (!zipalign.exists() && !assets.extractAsset("zipalign", zipalign.absolutePath))
             return null
 
-        Shell.SH.run("chmod 755 ${zipalign.absolutePath}")
+        zipalign.setExecutable(true)
+        zipalign.setWritable(true)
+        zipalign.setReadable(true)
+
         return zipalign.absolutePath
     }
 
@@ -152,12 +152,12 @@ fun Context.applyOverlay(listener: (() -> Unit)? = null) {
     }
 }
 
-fun deleteOverlay(listener: (() -> Unit)? = null) {
-    GlobalScope.launch {
+fun deleteOverlay(listener: (() -> Unit)? = null) = MainScope().launch {
+    withContext(Dispatchers.IO) {
         removeFromSystem(folderName)
-
-        MainScope().launch { listener?.invoke() }
     }
+
+    listener?.invoke()
 }
 
 fun makeResourceXml(vararg data: ResourceData): String {
@@ -236,16 +236,15 @@ fun Context.doCompileAlignAndSign(
     alignOverlay(unsignedUnaligned, unsigned)
     signOverlay(unsigned, signed)
 
-    Shell.run("sh", arrayOf("cp ${signed.absolutePath} ${signed.absolutePath}"), null, true)
-
-    listener?.invoke(signed)
+    Shell.su("cp ${signed.absolutePath} ${signed.absolutePath}").submit {
+        listener?.invoke(signed)
+    }
 }
 
+@SuppressLint("SetWorldReadable")
 @ExperimentalCoroutinesApi
-fun installToSystem(folderName: String, signed: SuFile, listener: (() -> Unit)? = null) {
-    GlobalScope.launch {
-        if (!moduleEnabled) Shell.SU.run("mount -o rw,remount $partition")
-
+fun installToSystem(folderName: String, signed: SuFile, listener: (() -> Unit)? = null) = MainScope().launch {
+    withContext(Dispatchers.IO) {
         val folder = SuFile(appDir, folderName)
         if (!folder.exists()) folder.mkdirs()
 
@@ -255,22 +254,19 @@ fun installToSystem(folderName: String, signed: SuFile, listener: (() -> Unit)? 
         folder.setReadable(true, false)
         folder.setExecutable(true, false)
 
-        Shell.SU.run("cp ${signed.absolutePath} ${dst.absolutePath}")
-
         dst.setWritable(true, true)
         dst.setReadable(true, false)
         dst.setExecutable(false)
 
-        if (!moduleEnabled) Shell.SU.run("mount -o ro,remount $partition")
-
-        MainScope().launch { listener?.invoke() }
+        signed.copyTo(dst, true)
     }
+
+    listener?.invoke()
 }
 
 fun removeFromSystem(folderName: String) {
-    if (!moduleEnabled) Shell.SU.run("mount -o rw,remount $partition")
-    Shell.SU.run("rm -rf $appDir/$folderName")
-    if (!moduleEnabled) Shell.SU.run("mount -o ro,remount $partition")
+    Shell.su("rm -rf $moduleAppDir/$folderName").exec()
+    Shell.su("rm -rf $systemAppDir/$folderName").exec()
 }
 
 fun Context.makeBaseDir(suffix: String): File {
@@ -281,7 +277,7 @@ fun Context.makeBaseDir(suffix: String): File {
     dir.mkdirs()
     dir.mkdir()
 
-    Shell.SH.run("chmod 777 ${dir.absolutePath}")
+    Shell.su("chmod 777 ${dir.absolutePath}").exec()
 
     return dir
 }
@@ -343,9 +339,9 @@ fun Context.compileOverlay(manifest: File, overlayFile: File, resFile: File, tar
         .append(overlayFile)
         .toString()
 
-    Shell.SH.run(aaptCmd)
+    Shell.su(aaptCmd).exec()
 
-    Shell.SH.run("chmod 777 ${overlayFile.absolutePath}")
+    Shell.su("chmod 777 ${overlayFile.absolutePath}").exec()
 }
 
 fun Context.alignOverlay(overlayFile: File, alignedOverlayFile: File) {
@@ -359,13 +355,12 @@ fun Context.alignOverlay(overlayFile: File, alignedOverlayFile: File) {
         .append(alignedOverlayFile.absolutePath)
         .toString()
 
-    Shell.run("sh", arrayOf(zipalignCmd), null, true)
-
-    Shell.SH.run("chmod 777 ${alignedOverlayFile.absolutePath}")
+    Shell.su(zipalignCmd).exec()
+    Shell.su("chmod 777 ${alignedOverlayFile.absolutePath}").exec()
 }
 
 fun Context.signOverlay(overlayFile: File, signed: File) {
-    Shell.SH.run("chmod 777 ${overlayFile.absolutePath}")
+    Shell.su("chmod 777 ${overlayFile.absolutePath}").exec()
 
     val key = File(cacheDir, "/signing-key-new")
     val pass = "overlay".toCharArray()
@@ -394,7 +389,7 @@ fun Context.signOverlay(overlayFile: File, signed: File) {
         .build()
         .sign()
 
-    Shell.Pool.SH.run("chmod 777 ${signed.absolutePath}")
+    Shell.su("chmod 777 ${signed.absolutePath}").exec()
 }
 
 fun AssetManager.extractAsset(assetPath: String, devicePath: String, cipher: Cipher?): Boolean {

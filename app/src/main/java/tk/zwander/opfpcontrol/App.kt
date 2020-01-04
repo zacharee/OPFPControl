@@ -4,15 +4,23 @@ import android.app.*
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.Log
+import com.topjohnwu.superuser.Shell
 import eu.chainfire.librootjava.RootIPCReceiver
 import eu.chainfire.librootjava.RootJava
-import eu.chainfire.libsuperuser.Shell
-import kotlinx.coroutines.*
 import tk.zwander.opfpcontrol.root.RootStuff
 import tk.zwander.opfpcontrol.util.prefs
-import tk.zwander.opfpcontrol.util.rootShell
 
-class App : Application(), CoroutineScope by MainScope() {
+class App : Application() {
+    companion object {
+        init {
+            Shell.Config.setFlags(Shell.FLAG_REDIRECT_STDERR)
+            Shell.Config.verboseLogging(true)
+            Shell.Config.setTimeout(10)
+            Shell.Config.setFlags(Shell.FLAG_USE_MAGISK_BUSYBOX)
+        }
+    }
+
     val ipcReceiver by lazy { IPCReceiverImpl(this, 100) }
     private val nm by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 
@@ -21,17 +29,21 @@ class App : Application(), CoroutineScope by MainScope() {
 
         ipcReceiver.setContext(this)
 
-        launch {
-            async {
-                rootShell.addCommand(
-                    RootJava.getLaunchScript(
-                        this@App,
-                        RootStuff::class.java,
-                        null, null, null,
-                        "${BuildConfig.APPLICATION_ID}:root")
-                )
-            }
-        }
+        // Something about changing su policies on the OnePlus 7T breaks everything
+//        Log.e("OPFPControl", "starting root daemon")
+//        val commands = RootJava.getLaunchScript(
+//            this@App,
+//            RootStuff::class.java,
+//            null, null, null,
+//            "${BuildConfig.APPLICATION_ID}:root").toTypedArray()
+//
+//        Log.e("OPFPControl", "SU process commands: \n${commands.joinToString("\n")}")
+//
+//        Shell.su(
+//            *commands
+//        ).submit {
+//            Log.e("OPFPControl", "started root daemon: ${it.out}")
+//        }
 
         val channel = NotificationChannel(
             "opfp_main",

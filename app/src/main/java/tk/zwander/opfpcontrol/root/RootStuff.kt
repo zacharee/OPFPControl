@@ -3,6 +3,7 @@ package tk.zwander.opfpcontrol.root
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.IBinder
+import android.util.Log
 import eu.chainfire.librootjava.RootIPC
 import eu.chainfire.librootjava.RootJava
 import tk.zwander.opfpcontrol.BuildConfig
@@ -14,18 +15,20 @@ object RootStuff {
         RootJava.restoreOriginalLdLibraryPath()
 
         val ipc = RootBridgeImpl()
-
+        
         try {
             RootIPC(BuildConfig.APPLICATION_ID, ipc, 100, 30 * 1000, true)
-        } catch (e: RootIPC.TimeoutException) {}
+        } catch (e: RootIPC.TimeoutException) {
+            Log.e("OPFPControl", "Root IPC connection failed", e)
+        }
     }
 
     class RootBridgeImpl : RootBridge.Stub() {
         @SuppressLint("PrivateApi")
-        val iPMClass = Class.forName("android.os.IPowerManager")
+        val iPMClass: Class<*> = Class.forName("android.os.IPowerManager")
 
         @SuppressLint("PrivateApi")
-        val pm = run {
+        val pm: Any = run {
             val serviceManagerClass = Class.forName("android.os.ServiceManager")
             val iPMStubClass = Class.forName("android.os.IPowerManager\$Stub")
 
