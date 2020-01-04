@@ -10,6 +10,8 @@ import androidx.annotation.ColorInt
 import androidx.core.graphics.ColorUtils
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.io.SuFile
+import com.topjohnwu.superuser.io.SuFileInputStream
+import com.topjohnwu.superuser.io.SuFileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -183,3 +185,34 @@ fun createMagiskModule(result: ((needsToReboot: Boolean) -> Unit)? = null) = Mai
 fun reboot() {
     Shell.su("svc power reboot")
 }
+
+fun SuFile.copyTo(target: SuFile, overwrite: Boolean = false, bufferSize: Int = DEFAULT_BUFFER_SIZE): File {
+    if (!this.exists()) {
+        throw NoSuchFileException(file = this, reason = "The source file doesn't exist.")
+    }
+
+    if (target.exists()) {
+        if (!overwrite)
+            throw FileAlreadyExistsException(file = this, other = target, reason = "The destination file already exists.")
+        else if (!target.delete())
+            throw FileAlreadyExistsException(file = this, other = target, reason = "Tried to overwrite the destination, but failed to delete it.")
+    }
+
+    if (this.isDirectory) {
+        if (!target.mkdirs())
+            throw FileSystemException(file = this, other = target, reason = "Failed to create target directory.")
+    } else {
+        target.parentFile?.mkdirs()
+
+        this.inputStream().use { input ->
+            target.outputStream().use { output ->
+                input.copyTo(output, bufferSize)
+            }
+        }
+    }
+
+    return target
+}
+
+fun SuFile.inputStream(): SuFileInputStream = SuFileInputStream(this)
+fun SuFile.outputStream(): SuFileOutputStream = SuFileOutputStream(this)

@@ -249,6 +249,7 @@ fun installToSystem(folderName: String, signed: SuFile, listener: (() -> Unit)? 
         if (!folder.exists()) folder.mkdirs()
 
         val dst = SuFile(folder, "$folderName.apk")
+        if (!dst.exists()) dst.createNewFile()
 
         folder.setWritable(true, true)
         folder.setReadable(true, false)
