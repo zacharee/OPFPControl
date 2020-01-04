@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
+import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.core.graphics.ColorUtils
 import com.topjohnwu.superuser.Shell
@@ -183,7 +184,9 @@ fun createMagiskModule(result: ((needsToReboot: Boolean) -> Unit)? = null) = Mai
 }
 
 fun reboot() {
-    Shell.su("svc power reboot")
+    Shell.su("/system/bin/svc power reboot").submit {
+        Log.e("OPFPControl", "Reboot failed?! ${it.code} ${it.isSuccess} \n${it.out.joinToString("\n")} \n${it.err.joinToString(",")}")
+    }
 }
 
 fun SuFile.copyTo(target: SuFile, overwrite: Boolean = false, bufferSize: Int = DEFAULT_BUFFER_SIZE): File {
