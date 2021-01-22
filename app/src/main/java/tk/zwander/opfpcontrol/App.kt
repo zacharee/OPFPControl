@@ -59,7 +59,7 @@ class App : Application() {
                             `package` = packageName
                             component = ComponentName(this@App, BCRRebootActivity::class.java)
                         },
-                        0
+                        PendingIntent.FLAG_UPDATE_CURRENT
                     )
                 )
 
