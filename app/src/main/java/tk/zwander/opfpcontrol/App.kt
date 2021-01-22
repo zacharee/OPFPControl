@@ -12,16 +12,7 @@ import tk.zwander.opfpcontrol.root.RootStuff
 import tk.zwander.opfpcontrol.util.prefs
 
 class App : Application() {
-    companion object {
-        init {
-            Shell.Config.setFlags(Shell.FLAG_REDIRECT_STDERR)
-            Shell.Config.verboseLogging(true)
-            Shell.Config.setTimeout(10)
-            Shell.Config.setFlags(Shell.FLAG_USE_MAGISK_BUSYBOX)
-        }
-    }
-
-    val ipcReceiver by lazy { IPCReceiverImpl(this, 100) }
+    private val ipcReceiver by lazy { IPCReceiverImpl(this, 100) }
     private val nm by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 
     override fun onCreate() {
