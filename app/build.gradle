@@ -8,12 +8,12 @@ def version = 6
 def moduleVersion = 2
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         applicationId "tk.zwander.opfpcontrol"
         minSdkVersion 28
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode version
         versionName version.toString()
 
