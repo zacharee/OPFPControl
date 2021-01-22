@@ -27,7 +27,7 @@ import java.lang.Exception
 import java.lang.StringBuilder
 import kotlin.math.max
 
-val MAGISK_PATH = "/sbin/.magisk"
+val MAGISK_PATH = "/data/adb"
 val MAGISK_MODULE_PATH = "$MAGISK_PATH/modules/opfpcontrol"
 
 val mainHandler = Handler(Looper.getMainLooper())
