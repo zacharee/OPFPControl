@@ -147,14 +147,15 @@ fun createMagiskModule(result: ((needsToReboot: Boolean) -> Unit)? = null) = Mai
     val needsToUpdate = withContext(Dispatchers.IO) {
         val doesExist = moduleExists
         val currentVersion = try {
-            BufferedReader(FileReader(SuFile("$MAGISK_MODULE_PATH/module.prop")))
-                .lines()
-                .filter { it.startsWith("versionCode") }
-                .findFirst()
-                .get()
-                .split("=")[1]
-                .toInt()
+            SuFileInputStream(SuFile("$MAGISK_MODULE_PATH/module.prop")).bufferedReader()
+                .useLines {
+                    it.filter { it.startsWith("versionCode") }
+                        .first()
+                        .split("=")[1]
+                        .toInt()
+                }
         } catch (e: Exception) {
+            Log.e("OPFPControl", e.message, e)
             0
         }
 
@@ -162,11 +163,11 @@ fun createMagiskModule(result: ((needsToReboot: Boolean) -> Unit)? = null) = Mai
 
         if (needsToUpdate) {
             val prop = StringBuilder()
-                .appendln("name=OPFPControl Module")
-                .appendln("version=${BuildConfig.MODULE_VERSION}")
-                .appendln("versionCode=${BuildConfig.MODULE_VERSION}")
-                .appendln("author=Zachary Wander")
-                .appendln("description=Systemlessly install FP themes")
+                .appendLine("name=OPFPControl Module")
+                .appendLine("version=${BuildConfig.MODULE_VERSION}")
+                .appendLine("versionCode=${BuildConfig.MODULE_VERSION}")
+                .appendLine("author=Zachary Wander")
+                .appendLine("description=Systemlessly install FP themes")
 
             Shell.su(
                 "mkdir -p $MAGISK_MODULE_PATH",
