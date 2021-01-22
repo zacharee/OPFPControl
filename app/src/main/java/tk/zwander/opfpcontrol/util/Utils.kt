@@ -39,7 +39,7 @@ val Context.prefs: PrefManager
     get() = PrefManager.getInstance(this)
 
 val isInstalled: Boolean
-    get() = File("$appDir/${Keys.folderName}/${Keys.folderName}.apk").exists()
+    get() = SuFile("$appDir", "${Keys.folderName}/${Keys.folderName}.apk").exists()
 
 val moduleExists: Boolean
     get() = SuFile(MAGISK_MODULE_PATH).exists()
