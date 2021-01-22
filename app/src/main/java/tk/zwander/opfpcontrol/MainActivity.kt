@@ -79,6 +79,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             }
         }
 
+        enableOverlay()
+
         prefs.registerOnSharedPreferenceChangeListener(this@MainActivity)
         updateColors()
 

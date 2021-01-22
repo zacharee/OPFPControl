@@ -220,3 +220,11 @@ fun SuFile.copyTo(target: SuFile, overwrite: Boolean = false, bufferSize: Int = 
 
 fun SuFile.inputStream(): SuFileInputStream = SuFileInputStream(this)
 fun SuFile.outputStream(): SuFileOutputStream = SuFileOutputStream(this)
+
+fun Context.enableOverlay() {
+    if (isInstalled) {
+        Shell.su("cmd overlay enable ${Keys.systemuiPkg}.${Keys.opfpcontrol}.${Keys.suffix}.${Keys.overlay}").exec()
+
+        app.notifyForSecondReboot()
+    }
+}

@@ -17,11 +17,7 @@ class BootReceiver : BroadcastReceiver(), CoroutineScope by MainScope() {
         when (intent.action) {
             Intent.ACTION_LOCKED_BOOT_COMPLETED,
             Intent.ACTION_BOOT_COMPLETED -> {
-                if (isInstalled) {
-                    Shell.su("cmd overlay enable ${Keys.systemuiPkg}.${Keys.opfpcontrol}.${Keys.suffix}.${Keys.overlay}").exec()
-
-                    context.app.notifyForSecondReboot()
-                }
+                context.enableOverlay()
             }
         }
     }
